@@ -52,13 +52,22 @@ document.addEventListener("DOMContentLoaded", function () {
       isValid = false;
     }
 
+    const consentInput = document.getElementById("consent");
+    if (!consentInput.checked) {
+      showError(
+        consentInput,
+        "Необходимо согласие на обработку персональных данных",
+      );
+      isValid = false;
+    }
+
     if (isValid) {
       const formData = {
         name: nameValue,
         email: emailValue,
         topic: topicInput.options[topicInput.selectedIndex].text,
         message: messageInput.value.trim(),
-        consent: document.getElementById("consent").checked,
+        consent: consentInput.checked,
       };
 
       const customEvent = new CustomEvent("formValid", { detail: formData });
@@ -74,17 +83,30 @@ document.addEventListener("DOMContentLoaded", function () {
     const help = document.createElement("p");
     help.classList.add("text-red-500", "text-xs", "mt-1", "error-text");
     help.textContent = message;
-    input.parentNode.appendChild(help);
+
+    if (input.type === "checkbox") {
+      input.parentElement.insertAdjacentElement("afterend", help);
+    } else {
+      input.parentElement.appendChild(help);
+    }
   }
 
   document.querySelectorAll("input, select, textarea").forEach((input) => {
-    input.addEventListener("input", function () {
-      if (this.classList.contains("is-invalid")) {
-        this.classList.remove("border-red-500", "is-invalid");
-        const parent = this.parentNode;
-        const errors = parent.querySelectorAll(".error-text");
-        errors.forEach((el) => el.remove());
-      }
-    });
+    input.addEventListener("input", removeError);
+    input.addEventListener("change", removeError);
   });
+
+  function removeError() {
+    if (this.classList.contains("is-invalid")) {
+      this.classList.remove("border-red-500", "is-invalid");
+
+      const errors = this.parentNode.querySelectorAll(".error-text");
+      errors.forEach((el) => el.remove());
+
+      const nextElement = this.parentNode.nextElementSibling;
+      if (nextElement && nextElement.classList.contains("error-text")) {
+        nextElement.remove();
+      }
+    }
+  }
 });
